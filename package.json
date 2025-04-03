@@ -1,0 +1,38 @@
+{
+  "name": "@unifuncs/ufn-mcp-server",
+  "version": "0.0.3",
+  "description": "UniFuncs MCP Server",
+  "type": "module",
+  "author": "Vinlic",
+  "license": "ISC",
+  "bin": {
+    "mcp-ufn": "./build/index.js"
+  },
+  "keywords": [
+    "unifuncs",
+    "mcp",
+    "mcp-server",
+    "unifuncs-mcp-server",
+    "web-search",
+    "web-reader",
+    "deepresearch"
+  ],
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.12",
+    "typescript": "^5.6.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
