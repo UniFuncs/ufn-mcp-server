@@ -1,6 +1,6 @@
 {
   "name": "@unifuncs/ufn-mcp-server",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "UniFuncs MCP Server",
   "type": "module",
   "author": "Vinlic",
@@ -22,6 +22,10 @@
   ],
   "scripts": {
     "build": "tsc && chmod 755 build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unifuncs/ufn-mcp-server.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
