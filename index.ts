@@ -43,6 +43,12 @@ const WEB_SEARCH_TOOL = {
                 default: 10,
                 minimum: 1,
                 maximum: 50
+            },
+            format: {
+                type: "string",
+                description: "输出格式，通常使用markdown",
+                enum: ["markdown", "text", "json"],
+                default: "markdown"
             }
         },
         required: ["query"],
@@ -108,12 +114,13 @@ async function request(method: string, url: string, data: Record<string, any>): 
     return response.text();
 }
 
-async function handleWebSearch(query: string, freshness: string, page: number, count: number) {
+async function handleWebSearch(query: string, freshness: string, page: number, count: number, format: string) {
     const data = await request("POST", "/api/web-search/search", {
         query,
         freshness,
         page,
         count,
+        format,
     });
     return {
         content: [{
@@ -156,8 +163,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     try {
         switch (request.params.name) {
             case "web-search": {
-                const { query, freshness, page, count } = request.params.arguments;
-                return await handleWebSearch(query, freshness, page, count);
+                const { query, freshness, page, count, format } = request.params.arguments;
+                return await handleWebSearch(query, freshness, page, count, format);
             }
             case "web-reader": {
                 const { url, format, includeImages, linkSummary } = request.params.arguments;
