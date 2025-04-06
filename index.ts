@@ -1,202 +1,137 @@
 #!/usr/bin/env node
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import express, { Request, Response } from "express";
+import { z } from "zod";
 import fetch from "node-fetch";
 
 function getApiKey() {
-    const apiKey = process.env.UNIFUNCS_API_KEY;
-    if (!apiKey) {
-        console.error("UNIFUNCS_API_KEY environment variable is not set");
-        process.exit(1);
-    }
-    return apiKey;
+  const apiKey = process.env.UNIFUNCS_API_KEY;
+  if (!apiKey) {
+    console.error("UNIFUNCS_API_KEY environment variable is not set");
+    process.exit(1);
+  }
+  return apiKey;
 }
 
 const UNIFUNCS_API_KEY = getApiKey();
 const UNIFUNCS_API_BASE = "https://api.unifuncs.com";
 
-const WEB_SEARCH_TOOL = {
-    name: "web-search",
-    description: "通过关键词检索互联网上的信息列表",
-    inputSchema: {
-        type: "object",
-        properties: {
-            query: {
-                type: "string",
-                description: "搜索关键词"
-            },
-            freshness: {
-                type: "string",
-                description: "时效性，通常使用Day",
-                enum: ["Day", "Week", "Month", "Year"],
-            },
-            page: {
-                type: "number",
-                description: "页码，从1开始，默认为1",
-                default: 1
-            },
-            count: {
-                type: "number",
-                description: "每页数量，默认为10",
-                default: 10,
-                minimum: 1,
-                maximum: 50
-            },
-            format: {
-                type: "string",
-                description: "输出格式，通常使用markdown",
-                enum: ["markdown", "text", "json"],
-                default: "markdown"
-            }
-        },
-        required: ["query"],
+async function request(
+  method: string,
+  url: string,
+  data: Record<string, any>
+): Promise<string | Record<string, any>> {
+  const response = await fetch(
+    `${UNIFUNCS_API_BASE}/${url.replace(/^\//, "")}`,
+    {
+      method: method,
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${UNIFUNCS_API_KEY}`,
+      },
     }
-}
-
-const WEB_READER_TOOL = {
-    name: "web-reader",
-    description: "阅读指定页面的详细内容",
-    inputSchema: {
-        type: "object",
-        properties: {
-            url: {
-                type: "string",
-                description: "待阅读的页面URL"
-            },
-            format: {
-                type: "string",
-                description: "输出格式，通常使用markdown",
-                enum: ["markdown"],
-                default: "markdown"
-            },
-            includeImages: {
-                type: "boolean",
-                description: "是否包含图片，默认为true",
-                default: true
-            },
-            linkSummary: {
-                type: "boolean",
-                description: "是否包含链接摘要，默认为true",
-                default: true
-            }
-        },
-        required: ["url"]
-    }
-}
-
-const ALL_TOOLS = [
-    WEB_SEARCH_TOOL,
-    WEB_READER_TOOL,
-];
-
-async function request(method: string, url: string, data: Record<string, any>): Promise<string | Record<string, any>> {
-    const response = await fetch(`${UNIFUNCS_API_BASE}/${url.replace(/^\//, "")}`, {
-        method: method,
-        body: JSON.stringify(data),
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${UNIFUNCS_API_KEY}`,
-        },
-    });
-    if (response.headers.get("Content-Type")?.includes("application/json")) {
-        const result = await response.json() as {
-            code: number;
-            message: string;
-            data: any;
-        };
-        if (result.code !== 0) {
-            throw new Error(result.message);
-        }
-        return result.data;
-    }
-    return response.text();
-}
-
-async function handleWebSearch(query: string, freshness: string, page: number, count: number, format: string) {
-    const data = await request("POST", "/api/web-search/search", {
-        query,
-        freshness,
-        page,
-        count,
-        format,
-    });
-    return {
-        content: [{
-            type: "text",
-            text: JSON.stringify(data)
-        }]
+  );
+  if (response.headers.get("Content-Type")?.includes("application/json")) {
+    const result = (await response.json()) as {
+      code: number;
+      message: string;
+      data: any;
     };
+    if (result.code !== 0) {
+      throw new Error(result.message);
+    }
+    return result.data;
+  }
+  return response.text();
 }
 
-async function handleWebReader(url: string, format: string, includeImages: boolean, linkSummary: boolean) {
-    const content = await request("POST", "/api/web-reader/read", {
-        url,
-        format,
-        includeImages,
-        linkSummary,
-    });
-    return {
-        content: [{
-            type: "text",
-            text: typeof content === 'string' ? content : JSON.stringify(content)
-        }]
-    };
+async function handleWebSearch(params: any) {
+  const data = await request("POST", "/api/web-search/search", params);
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data),
+      },
+    ]
+  } as any;
+}
+
+async function handleWebReader(params: any) {
+  const content = await request("POST", "/api/web-reader/read", params);
+  return {
+    content: [
+      {
+        type: "text",
+        text: typeof content === "string" ? content : JSON.stringify(content),
+      },
+    ],
+  } as any;
 }
 
 // Server setup
-const server = new Server({
-    name: "mcp-server/unifuncs",
-    version: "0.0.1",
-}, {
-    capabilities: {
-        tools: {},
-    },
+const server = new McpServer({
+  name: "mcp-server/unifuncs",
+  version: "0.0.5",
 });
 
-// Set up request handlers
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: ALL_TOOLS,
-}));
-server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
-    try {
-        switch (request.params.name) {
-            case "web-search": {
-                const { query, freshness, page, count, format } = request.params.arguments;
-                return await handleWebSearch(query, freshness, page, count, format);
-            }
-            case "web-reader": {
-                const { url, format, includeImages, linkSummary } = request.params.arguments;
-                return await handleWebReader(url, format, includeImages, linkSummary);
-            }
-            default:
-                return {
-                    content: [{
-                        type: "text",
-                        text: `Unknown tool: ${request.params.name}`
-                    }],
-                    isError: true
-                };
-        }
-    } catch (error) {
-        return {
-            content: [{
-                type: "text",
-                text: `Error: ${error instanceof Error ? error.message : String(error)}`
-            }],
-            isError: true
-        };
-    }
-});
+server.tool(
+  "web-search",
+  {
+    query: z.string(),
+    freshness: z.enum(["Day", "Week", "Month", "Year"]).optional(),
+    page: z.number().min(1).optional(),
+    count: z.number().min(1).max(50).optional(),
+    format: z.enum(["markdown", "text", "json"]).optional(),
+  },
+  handleWebSearch
+);
+server.tool(
+  "web-reader",
+  {
+    url: z.string(),
+    format: z.enum(["markdown"]).optional(),
+    includeImages: z.boolean().optional(),
+    linkSummary: z.boolean().optional(),
+  },
+  handleWebReader
+);
 
-async function runServer() {
-    const transport = new StdioServerTransport();
+if (process.env.UNIFUNCS_SSE_SERVER || process.argv.includes("--sse")) {
+  const app = express();
+  const transports: { [sessionId: string]: SSEServerTransport } = {};
+
+  app.get("/sse", async (_: Request, res: Response) => {
+    const transport = new SSEServerTransport("/messages", res);
+    transports[transport.sessionId] = transport;
+    res.on("close", () => {
+      delete transports[transport.sessionId];
+    });
     await server.connect(transport);
-    console.error("UniFuncs MCP Server running on stdio");
-}
+  });
 
-runServer().catch((error) => {
-    console.error("Fatal error running server:", error);
-    process.exit(1);
-});
+  app.post("/messages", async (req: Request, res: Response) => {
+    const sessionId = req.query.sessionId as string;
+    const transport = transports[sessionId];
+    if (transport) {
+      await transport.handlePostMessage(req, res);
+    } else {
+      res.status(400).send("No transport found for sessionId");
+    }
+  });
+
+  const port = Number(process.env.UNIFUNCS_SSE_SERVER_PORT || 5656);
+  app.listen(port, () => {
+    console.log(`UniFuncs MCP Server running on http://localhost:${port}`);
+  });
+
+}
+else {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.log("UniFuncs MCP Server running on stdio");
+}
