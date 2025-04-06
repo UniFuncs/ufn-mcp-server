@@ -1,6 +1,6 @@
 {
   "name": "@unifuncs/ufn-mcp-server",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "UniFuncs MCP Server",
   "type": "module",
   "author": "Vinlic",
@@ -29,7 +29,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
-    "node-fetch": "^3.3.2"
+    "@types/express": "^5.0.1",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.12",
