@@ -76,11 +76,12 @@ async function handleWebReader(params: any) {
 // Server setup
 const server = new McpServer({
   name: "mcp-server/unifuncs",
-  version: "0.0.5",
+  version: "0.0.6",
 });
 
 server.tool(
   "web-search",
+  "通过关键词检索互联网上的信息列表",
   {
     query: z.string(),
     freshness: z.enum(["Day", "Week", "Month", "Year"]).optional(),
@@ -92,6 +93,7 @@ server.tool(
 );
 server.tool(
   "web-reader",
+  "抓取指定页面URL的详细内容",
   {
     url: z.string(),
     format: z.enum(["markdown"]).optional(),
