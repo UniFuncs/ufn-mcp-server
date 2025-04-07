@@ -1,6 +1,6 @@
 {
   "name": "@unifuncs/ufn-mcp-server",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "UniFuncs MCP Server",
   "type": "module",
   "author": "Vinlic",
