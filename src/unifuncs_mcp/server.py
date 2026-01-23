@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 UniFuncs MCP Server
 ===================
@@ -15,7 +14,7 @@ import os
 import json
 import logging
 import sys
-from typing import Optional, Literal
+from typing import Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP

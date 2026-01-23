@@ -13,34 +13,25 @@
 
 ## 快速开始
 
-### 1. 克隆仓库
+### 方式一：使用 uvx（推荐）
 
-```bash
-git clone https://github.com/UniFuncs/ufn-mcp-server.git
-cd ufn-mcp-server
-```
+无需下载安装，直接配置即可使用！
 
-### 2. 安装依赖
-
-```bash
-pip install mcp httpx
-```
-
-### 3. 获取 API Key
+**1. 获取 API Key**
 
 前往 [UniFuncs 账户页面](https://unifuncs.com/account) 获取您的 API Key。
 
-### 4. 配置 Claude Code
+**2. 配置 Claude Code**
 
-编辑 `.mcp.json`，填入您的 API Key：
+编辑 `~/.claude/claude_desktop_config.json` 或项目目录下的 `.mcp.json`：
 
 ```json
 {
   "mcpServers": {
     "unifuncs": {
       "type": "stdio",
-      "command": "python3",
-      "args": ["/path/to/unifuncs_deepsearch_server.py"],
+      "command": "uvx",
+      "args": ["unifuncs-mcp-server"],
       "env": {
         "UNIFUNCS_API_KEY": "sk-你的API Key"
       }
@@ -49,10 +40,64 @@ pip install mcp httpx
 }
 ```
 
-### 5. 重启 Claude Code 并验证
+**3. 重启 Claude Code 并验证**
 
 ```
 /mcp
+```
+
+### 方式二：使用 pip 安装
+
+```bash
+pip install unifuncs-mcp-server
+```
+
+然后配置 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "unifuncs": {
+      "type": "stdio",
+      "command": "unifuncs-mcp-server",
+      "env": {
+        "UNIFUNCS_API_KEY": "sk-你的API Key"
+      }
+    }
+  }
+}
+```
+
+### 方式三：从源码运行
+
+```bash
+# 克隆仓库
+git clone https://github.com/UniFuncs/ufn-mcp-server.git
+cd ufn-mcp-server
+
+# 安装依赖
+pip install -e .
+
+# 或者直接运行
+pip install mcp httpx
+python src/unifuncs_mcp/server.py
+```
+
+配置 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "unifuncs": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["/path/to/ufn-mcp-server/src/unifuncs_mcp/server.py"],
+      "env": {
+        "UNIFUNCS_API_KEY": "sk-你的API Key"
+      }
+    }
+  }
+}
 ```
 
 ## 工具说明
