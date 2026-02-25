@@ -22,19 +22,25 @@ const UNIFUNCS_API_BASE = "https://api.unifuncs.com";
 async function request(
   method: string,
   url: string,
-  data: Record<string, any>
+  data?: Record<string, any>
 ): Promise<string | Record<string, any>> {
+  const options: any = {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${UNIFUNCS_API_KEY}`,
+    },
+  };
+  
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+  
   const response = await fetch(
     `${UNIFUNCS_API_BASE}/${url.replace(/^\//, "")}`,
-    {
-      method: method,
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${UNIFUNCS_API_KEY}`,
-      },
-    }
+    options
   );
+  
   if (response.headers.get("Content-Type")?.includes("application/json")) {
     const result = (await response.json()) as {
       code: number;
@@ -49,6 +55,7 @@ async function request(
   return response.text();
 }
 
+// Web Search Tool
 async function handleWebSearch(params: any) {
   const data = await request("POST", "/api/web-search/search", params);
   return {
@@ -61,6 +68,7 @@ async function handleWebSearch(params: any) {
   } as any;
 }
 
+// Web Reader Tool
 async function handleWebReader(params: any) {
   const content = await request("POST", "/api/web-reader/read", params);
   return {
@@ -73,12 +81,125 @@ async function handleWebReader(params: any) {
   } as any;
 }
 
+// Deep Search - Sync Tool
+async function handleDeepSearchSync(params: any) {
+  const { model = "s3", messages, stream = false } = params;
+  const data = await request("POST", "/deepsearch/v1/chat/completions", {
+    model,
+    messages,
+    stream
+  });
+  return {
+    content: [
+      {
+        type: "text",
+        text: typeof data === "string" ? data : JSON.stringify(data),
+      },
+    ],
+  } as any;
+}
+
+// Deep Search - Create Task Tool
+async function handleDeepSearchCreateTask(params: any) {
+  const { model = "s3", messages } = params;
+  const data = await request("POST", "/deepsearch/v1/create_task", {
+    model,
+    messages
+  });
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data),
+      },
+    ],
+  } as any;
+}
+
+// Deep Search - Query Task Tool
+async function handleDeepSearchQueryTask(params: any) {
+  const { task_id } = params;
+  const data = await request("GET", `/deepsearch/v1/query_task?task_id=${task_id}`);
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data),
+      },
+    ],
+  } as any;
+}
+
+// Deep Research - Create Task Tool
+async function handleDeepResearchCreateTask(params: any) {
+  const {
+    model = "u1",
+    content,
+    introduction,
+    reference_style = "link",
+    generate_summary = false,
+    max_depth = 25,
+    domain_scope,
+    domain_blacklist,
+    output_prompt,
+    important_urls,
+    important_keywords,
+    important_prompt,
+    push_to_share = false,
+    set_public = false
+  } = params;
+  
+  const requestData: any = {
+    model,
+    messages: [{ role: "user", content }]
+  };
+  
+  // Add optional parameters
+  if (introduction) requestData.introduction = introduction;
+  if (reference_style) requestData.reference_style = reference_style;
+  if (generate_summary) requestData.generate_summary = generate_summary;
+  if (max_depth) requestData.max_depth = max_depth;
+  if (domain_scope) requestData.domain_scope = domain_scope;
+  if (domain_blacklist) requestData.domain_blacklist = domain_blacklist;
+  if (output_prompt) requestData.output_prompt = output_prompt;
+  if (important_urls) requestData.important_urls = important_urls;
+  if (important_keywords) requestData.important_keywords = important_keywords;
+  if (important_prompt) requestData.important_prompt = important_prompt;
+  if (push_to_share) requestData.push_to_share = push_to_share;
+  if (set_public) requestData.set_public = set_public;
+  
+  const data = await request("POST", "/deepresearch/v1/create_task", requestData);
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data),
+      },
+    ],
+  } as any;
+}
+
+// Deep Research - Query Task Tool
+async function handleDeepResearchQueryTask(params: any) {
+  const { task_id } = params;
+  const data = await request("GET", `/deepresearch/v1/query_task?task_id=${task_id}`);
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(data),
+      },
+    ],
+  } as any;
+}
+
 // Server setup
 const server = new McpServer({
   name: "mcp-server/unifuncs",
-  version: "0.0.6",
+  version: "0.1.0",
 });
 
+// Register Web Search Tool
 server.tool(
   "web-search",
   "通过关键词检索互联网上的信息列表",
@@ -91,6 +212,8 @@ server.tool(
   },
   handleWebSearch
 );
+
+// Register Web Reader Tool
 server.tool(
   "web-reader",
   "抓取指定页面URL的详细内容",
@@ -103,6 +226,79 @@ server.tool(
   handleWebReader
 );
 
+// Register Deep Search - Sync Tool
+server.tool(
+  "deep-search-sync",
+  "深度搜索同步接口，实时返回搜索结果",
+  {
+    model: z.enum(["s3"]).optional().default("s3"),
+    messages: z.array(z.object({
+      role: z.enum(["user", "assistant", "system"]),
+      content: z.string()
+    })),
+    stream: z.boolean().optional().default(false),
+  },
+  handleDeepSearchSync
+);
+
+// Register Deep Search - Create Task Tool
+server.tool(
+  "deep-search-create-task",
+  "创建深度搜索异步任务，立即返回task_id",
+  {
+    model: z.enum(["s3"]).optional().default("s3"),
+    messages: z.array(z.object({
+      role: z.enum(["user", "assistant", "system"]),
+      content: z.string()
+    })),
+  },
+  handleDeepSearchCreateTask
+);
+
+// Register Deep Search - Query Task Tool
+server.tool(
+  "deep-search-query-task",
+  "查询深度搜索异步任务状态和结果",
+  {
+    task_id: z.string(),
+  },
+  handleDeepSearchQueryTask
+);
+
+// Register Deep Research - Create Task Tool
+server.tool(
+  "deep-research-create-task",
+  "创建深度研究任务，进行深度的网络信息研究和分析",
+  {
+    model: z.enum(["u1", "u1-pro"]).optional().default("u1"),
+    content: z.string(),
+    introduction: z.string().optional(),
+    reference_style: z.enum(["link", "number", "footnote"]).optional().default("link"),
+    generate_summary: z.boolean().optional().default(false),
+    max_depth: z.number().min(1).max(50).optional().default(25),
+    domain_scope: z.string().optional(),
+    domain_blacklist: z.string().optional(),
+    output_prompt: z.string().optional(),
+    important_urls: z.string().optional(),
+    important_keywords: z.string().optional(),
+    important_prompt: z.string().optional(),
+    push_to_share: z.boolean().optional().default(false),
+    set_public: z.boolean().optional().default(false),
+  },
+  handleDeepResearchCreateTask
+);
+
+// Register Deep Research - Query Task Tool
+server.tool(
+  "deep-research-query-task",
+  "查询深度研究任务状态和结果",
+  {
+    task_id: z.string(),
+  },
+  handleDeepResearchQueryTask
+);
+
+// Start server
 if (process.env.UNIFUNCS_SSE_SERVER || process.argv.includes("--sse")) {
   const app = express();
   const transports: { [sessionId: string]: SSEServerTransport } = {};
@@ -130,10 +326,8 @@ if (process.env.UNIFUNCS_SSE_SERVER || process.argv.includes("--sse")) {
   app.listen(port, () => {
     console.log(`UniFuncs MCP Server running on http://localhost:${port}`);
   });
-
-}
-else {
+} else {
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  server.connect(transport);
   console.log("UniFuncs MCP Server running on stdio");
 }
