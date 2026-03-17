@@ -71,6 +71,29 @@ https://unifuncs.com/account
 }
 ```
 
+Note: the `npx` experience reflects the latest package published to npm, not necessarily the current `main` branch. If the published npm version is behind `main`, use the source build instructions below to reproduce the latest merged toolset.
+
+### Source Build (Local)
+
+```bash
+git clone https://github.com/UniFuncs/ufn-mcp-server.git
+cd ufn-mcp-server
+yarn install
+npm run build
+UNIFUNCS_API_KEY=sk-********** node build/index.js
+```
+
+Example Codex MCP config:
+
+```toml
+[mcp_servers.unifuncs-local]
+command = "node"
+args = ["/absolute/path/to/ufn-mcp-server/build/index.js"]
+
+[mcp_servers.unifuncs-local.env]
+UNIFUNCS_API_KEY = "sk-**********"
+```
+
 ### SSE Server
 
 For SSE transport, set the environment variable:
@@ -211,6 +234,17 @@ For detailed pricing, visit: https://unifuncs.com/pricing
 - GitHub: https://github.com/UniFuncs/ufn-mcp-server
 - Email: service@unifuncs.com
 - WeChat: unifuncs
+
+## Maintainer Release Checklist
+
+Before documenting new tools in the `npx` setup section, make sure the npm package has been published and smoke-tested.
+
+1. Bump the package version.
+2. Install dependencies and run `npm run build`.
+3. Publish the package to npm.
+4. Verify `npm view @unifuncs/ufn-mcp-server version` matches the intended release.
+5. Verify `npx -y @unifuncs/ufn-mcp-server` exposes the same tools described in this README.
+6. Update the changelog and README after the npm release is available.
 
 ## License
 
