@@ -22,7 +22,7 @@ Extract detailed content from web pages
 
 ### 3. Deep Search - Sync (`deep-search-sync`)
 Real-time deep search with immediate results
-- Model: S3
+- Model: S3 / S3 Pro
 - Streaming support
 - Instant response
 
