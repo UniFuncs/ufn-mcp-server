@@ -130,14 +130,14 @@ LinkSummary: boolean (optional)
 
 ### deep-search-sync
 ```
-Model: s3 (default: s3)
+Model: s3 / s3-pro (default: s3)
 Messages: Array of {role: "user"|"assistant"|"system", content: string}
 Stream: boolean (default: false)
 ```
 
 ### deep-search-create-task
 ```
-Model: s3 (default: s3)
+Model: s3 / s3-pro (default: s3)
 Messages: Array of {role: "user"|"assistant"|"system", content: string}
 Returns: task_id for querying status
 ```
