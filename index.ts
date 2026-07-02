@@ -231,7 +231,7 @@ server.tool(
   "deep-search-sync",
   "深度搜索同步接口，实时返回搜索结果",
   {
-    model: z.enum(["s3"]).optional().default("s3"),
+    model: z.enum(["s3", "s3-pro"]).optional().default("s3"),
     messages: z.array(z.object({
       role: z.enum(["user", "assistant", "system"]),
       content: z.string()
@@ -246,7 +246,7 @@ server.tool(
   "deep-search-create-task",
   "创建深度搜索异步任务，立即返回task_id",
   {
-    model: z.enum(["s3"]).optional().default("s3"),
+    model: z.enum(["s3", "s3-pro"]).optional().default("s3"),
     messages: z.array(z.object({
       role: z.enum(["user", "assistant", "system"]),
       content: z.string()
