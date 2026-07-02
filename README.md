@@ -34,7 +34,7 @@ Asynchronous deep search for complex queries
 
 ### 5. Deep Research (`deep-research-create-task` + `deep-research-query-task`)
 Comprehensive deep research capabilities
-- Models: U1, U1-Pro
+- Models: U3, U3 Pro
 - Customizable research parameters:
   - Introduction: Set researcher persona
   - Reference style: link/number/footnote
@@ -150,7 +150,7 @@ Returns: Task status, progress, and results when completed
 
 ### deep-research-create-task
 ```
-Model: u1 | u1-pro (default: u1)
+Model: u3 | u3-pro (default: u3)
 Content: Research question/topic
 Introduction: Researcher persona (optional)
 Reference_Style: link | number | footnote (default: link)
@@ -204,7 +204,7 @@ Returns: Task status, progress, and results when completed
 ```javascript
 // Create research task
 {
-  "model": "u1",
+  "model": "u3",
   "content": "Analyze the impact of AI on healthcare",
   "max_depth": 25,
   "domain_scope": "arxiv.org, nature.com",
@@ -223,8 +223,8 @@ Returns: Task status, progress, and results when completed
 - Web Reader: Pay per request
 - Deep Search: Pay per token usage
 - Deep Research: 
-  - U1: 0.6 PTC/M Tokens
-  - U1-Pro: 1.2 PTC/M Tokens
+  - U3: M Tokens
+  - U3 Pro: M Tokens
 
 For detailed pricing, visit: https://unifuncs.com/pricing
 
